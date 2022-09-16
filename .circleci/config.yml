@@ -318,7 +318,7 @@ jobs:
 #             fi
   notify_on_success:
     docker:
-       - image: cimg/base
+       - image: cimg/base:stable
     
     steps:
      - slack/notify:
