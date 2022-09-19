@@ -85,7 +85,8 @@ jobs:
           paths: [frontend/node_modules]
           key: frontend-deps 
 
-      - notify_on_failure
+      # - notify_on_failure
+
   build-backend:
     docker:
       - image: cimg/node:13.8.0
@@ -105,6 +106,7 @@ jobs:
           key: backend-deps
 
       # - notify_on_failure
+
   test-frontend:
     docker:
        - image: cimg/node:13.8.0
@@ -118,6 +120,7 @@ jobs:
              cd frontend
              npm install 
              npm test
+
       #  - notify_on_failure      
              
        
@@ -344,19 +347,19 @@ jobs:
 #             then
 #               # your code here
 #             fi
-  notify_on_success:
-    docker:
-       - image: cimg/base:stable
+  # notify_on_success:
+  #   docker:
+  #      - image: cimg/base:stable
     
-    steps:
-     - slack/notify:
-         event: pass
-         channel: cicd-pipline
-         template: success_tagged_deployment_1
+  #   steps:
+  #    - slack/notify:
+  #        event: pass
+  #        channel: cicd-pipline
+  #        template: success_tagged_deployment_1
 
 
 workflows:
-  default:
+
     jobs:
       - build-frontend
       - build-backend
