@@ -5,12 +5,12 @@ orbs:
 
 
 commands:
-#   notify_on_failure:
-#     steps:
-#       - slack/notify:
-#           event: fail
-#           channel: cicd-pipline
-#           template: basic_fail_1  
+  notify_on_failure:
+    steps:
+      - slack/notify:
+          event: fail
+          channel: cicd-pipline
+          template: basic_fail_1  
 
 
   install_awscli:
@@ -39,28 +39,18 @@ commands:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
       Workflow_ID:
-      type: string
-      default: ${CIRCLE_WORKFLOW_ID:0:7}
-  steps:
-    - run:
-        name: Destroy environments
-        when: on_fail
-        command: |
-          # Empty frontend bucket
-          aws s3 rm s3://udapeople-<<parameters.Workflow_ID>> --recursive
-
-          # Delete frontend stack
-          aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.Workflow_ID >>
-
-          # Delete backend stack
-          aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.Workflow_ID >>  
+        type: string
+        default: ${CIRCLE_WORKFLOW_ID:0:7}
     steps:
       - run:
           name: Destroy environments
           when: on_fail
           command: |
-            # Your code here
-            exit 1
+          
+             aws s3 rm s3://udapeople-<<parameters.Workflow_ID>> --recursive
+             aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.Workflow_ID >>
+             aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.Workflow_ID >>  
+    
 
 #   revert-migrations:
 #     description: Revert the last migration if successfully run in the current workflow.
