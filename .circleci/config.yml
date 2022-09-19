@@ -86,7 +86,7 @@ jobs:
           key: frontend-deps 
 
       # - notify_on_failure
-
+      
   build-backend:
     docker:
       - image: cimg/node:13.8.0
@@ -359,7 +359,7 @@ jobs:
 
 
 workflows:
-
+  default:
     jobs:
       - build-frontend
       - build-backend
