@@ -4,7 +4,7 @@ orbs:
 #   slack: circleci/slack@4.9.3
 
 
-# commands:
+commands:
 #   notify_on_failure:
 #     steps:
 #       - slack/notify:
@@ -34,18 +34,33 @@ orbs:
              sudo apt install software-properties-common
              sudo add-apt-repository --yes --update ppa:ansible/ansible
              sudo apt install ansible
-# commands:
-#   destroy-environment:
-#     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-#     parameters:
-#       # Add parameter here   
-#     steps:
-#       - run:
-#           name: Destroy environments
-#           when: on_fail
-#           command: |
-#             # Your code here
-#             exit 1
+
+  destroy-environment:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    parameters:
+      Workflow_ID:
+      type: string
+      default: ${CIRCLE_WORKFLOW_ID:0:7}
+  steps:
+    - run:
+        name: Destroy environments
+        when: on_fail
+        command: |
+          # Empty frontend bucket
+          aws s3 rm s3://udapeople-<<parameters.Workflow_ID>> --recursive
+
+          # Delete frontend stack
+          aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.Workflow_ID >>
+
+          # Delete backend stack
+          aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.Workflow_ID >>  
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            # Your code here
+            exit 1
 
 #   revert-migrations:
 #     description: Revert the last migration if successfully run in the current workflow.
@@ -221,27 +236,34 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure      
 
-#   configure-infrastructure:
-#     docker:
-#       # Docker image here that supports Ansible
-#     steps:
-#       # Checkout code from git
-#       # Add ssh keys with fingerprint
-#       # attach workspace
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # Your code here
-#             exit 1
-#       - run:
-#           name: Configure server
-#           command: |
-#             # Your code here
-#             exit 1
-#       # Here's where you will add some code to rollback on failure      
+      - destroy-environment
 
+  configure-infrastructure:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      -checkout
+      - run:
+          name: Install Ansible v2
+          command: |
+             sudo apt update
+             sudo apt install software-properties-common
+             sudo add-apt-repository --yes --update ppa:ansible/ansible
+             sudo apt install ansible
+      - add_ssh_keys:
+          fingerprints: ["59:56:66:ea:f0:17:f5:e6:73:8b:9d:74:52:c3:5b:57"]    
+
+      - attach_workspace:
+          at: ~/       
+      - run:
+          name: Configure Server
+          command: |
+            cd .circleci/ansible
+            cat inventory.txt
+            nsible-playbook -i inventory.txt configure-server.yml
+      - destroy-environment
+    
 #   run-migrations:
 #     docker:
 #       # Docker image here that supports NodeJS
@@ -389,8 +411,8 @@ workflows:
           filters:
             branches:
               only: [main]
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
       # - run-migrations:
       #     requires: [configure-infrastructure]
       # - deploy-frontend:
