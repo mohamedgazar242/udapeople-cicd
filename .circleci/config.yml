@@ -267,6 +267,8 @@ jobs:
       - image: cimg/node:13.8.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [backend-deps]
       - run:
           name: Install AWS CLI v2
           command: |
@@ -299,7 +301,6 @@ jobs:
                curl https://kvdb.io/${KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
              else
                echo "No migrations are pending" 
-          
              fi
       # - destroy-environment
       # - revert-migrations       
