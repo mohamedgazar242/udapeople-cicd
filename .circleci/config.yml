@@ -35,43 +35,43 @@ commands:
              sudo add-apt-repository --yes --update ppa:ansible/ansible
              sudo apt install ansible
 
-  destroy-environment:
-    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-    parameters:
-      Workflow_ID:
-        type: string
-        default: ${CIRCLE_WORKFLOW_ID:0:7}
-    steps:
-      - run:
-          name: Destroy environments
-          when: on_fail
-          command: |
+  # destroy-environment:
+  #   description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+  #   parameters:
+  #     Workflow_ID:
+  #       type: string
+  #       default: ${CIRCLE_WORKFLOW_ID:0:7}
+  #   steps:
+  #     - run:
+  #         name: Destroy environments
+  #         when: on_fail
+  #         command: |
           
-             aws s3 rm s3://udapeople-<<parameters.Workflow_ID>> --recursive
-             aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.Workflow_ID >>
-             aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.Workflow_ID >>  
+  #            aws s3 rm s3://udapeople-<<parameters.Workflow_ID>> --recursive
+  #            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.Workflow_ID >>
+  #            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.Workflow_ID >>  
     
 
-  revert-migrations:
-    description: Revert the last migration, if any were executed during the current workflow
-    parameters:
-      Workflow_ID:
-        type: string
-        default: ${CIRCLE_WORKFLOW_ID:0:7}
-    steps:
-      - run:
-          name: Revert migrations
-          when: on_fail
-          command: |
-            SUCCESS=$(curl --insecure  https://kvdb.io/${KVDB_BUCKET}/migration_<< parameters.Workflow_ID >>)
+  # revert-migrations:
+  #   description: Revert the last migration, if any were executed during the current workflow
+  #   parameters:
+  #     Workflow_ID:
+  #       type: string
+  #       default: ${CIRCLE_WORKFLOW_ID:0:7}
+  #   steps:
+  #     - run:
+  #         name: Revert migrations
+  #         when: on_fail
+  #         command: |
+  #           SUCCESS=$(curl --insecure  https://kvdb.io/${KVDB_BUCKET}/migration_<< parameters.Workflow_ID >>)
 
-            # Logic for reverting the database state
-            if (( $SUCCESS == 1 ));
-            then
-              cd ~/project/backend
-              npm install
-              npm run migration:revert
-            fi
+  #           # Logic for reverting the database state
+  #           if (( $SUCCESS == 1 ));
+  #           then
+  #             cd ~/project/backend
+  #             npm install
+  #             npm run migration:revert
+  #           fi
             
 jobs:
   build-frontend:
@@ -229,7 +229,7 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
 
-      - destroy-environment
+      # - destroy-environment
 
   configure-infrastructure:
     docker:
@@ -260,7 +260,7 @@ jobs:
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
-      - destroy-environment
+      # - destroy-environment
     
   run-migrations:
     docker:
@@ -303,7 +303,7 @@ jobs:
              else
                echo "No migrations are pending" 
              fi
-      # - destroy-environment
+      # # - destroy-environment
       # - revert-migrations       
      # Here's where you will add some code to rollback on failure      
 
