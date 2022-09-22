@@ -31,11 +31,11 @@
           delay: 10
           timeout: 600
 
-    - name: "install python for Ansible."
-      become: yes
-      apt:
-        name: python3
-        state: latest
+     - name: "install python for Ansible."
+       become: yes
+       apt:
+         name: python3
+         state: latest
 
 
 
