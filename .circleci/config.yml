@@ -474,64 +474,66 @@ jobs:
       # Here's where you will add some code to rollback on failure  
 
   cloudfront-update:
-    docker:
-      - image: cimg/base:stable
-    steps:
-      - checkout
-      - run:
-          name: Install AWS CLI v2
-          command: |
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.0.30.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-      - run:
-          name: Install Node.js 13.8.0
-          command: |
-            # Install Node.js LTS version as our base Node.js version
-            curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-            sudo apt install -y nodejs
-
-      - add_ssh_keys:
-          fingerprints: ["59:56:66:ea:f0:17:f5:e6:73:8b:9d:74:52:c3:5b:57"]
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Install dependencies
-          command: |
-            curl --silent --location https://rpm.nodesource.com/setup_16.x | bash -
-            yum install nodejs -y
-      - run:
-          name: Update cloudfront distribution
-          command: |
-            aws cloudformation deploy \
-              --template-file .circleci/files/cloudfront.yml \
-              --stack-name udapeople-cloudfront-${CIRCLE_WORKFLOW_ID:0:7} \
-              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
-              --tags project=udapeople 
-          
-               
-      - destroy-environment
-      - revert-migrations
-      # Here's where you will add some code to rollback on failure  
-
-# cleanup:
-#     docker:
-#       # Docker image here
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Get old stack workflow id
-#           command: |
-#             # your code here
-#             export OldWorkflowID="the id here"
-#             export STACKS=[] #put the list of stacks here
-#       - run:
-#           name: Remove old stacks and files
-#           command: |
-#             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
-#             then
-#               # your code here
-#             fi
+      docker:
+        - image: amazon/aws-cli
+      steps:
+        - checkout
+        - run: yum install -y tar gzip
+        - add_ssh_keys:
+            fingerprints: ["6e:27:fa:9d:ad:16:8b:66:f7:c5:d0:00:6c:df:c8:48"]
+        - attach_workspace:
+            at: ~/
+        - run:
+            name: Install dependencies
+            command: |
+              curl --silent --location https://rpm.nodesource.com/setup_16.x | bash -
+              yum install nodejs -y
+        - run:
+            name: Update cloudfront distribution
+            command: |
+              aws cloudformation deploy \
+                --template-file .circleci/files/cloudfront.yml \
+                --stack-name udapeople-cloudfront-${CIRCLE_WORKFLOW_ID:0:7} \
+                --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+                --tags project=udapeople
+  cleanup:
+      docker:
+        - image: amazon/aws-cli
+      steps:
+        - checkout
+        - run: yum install -y tar gzip
+        - add_ssh_keys:
+            fingerprints: ["6e:27:fa:9d:ad:16:8b:66:f7:c5:d0:00:6c:df:c8:48"]
+        - attach_workspace:
+            at: ~/
+        - run:
+            name: Install dependencies
+            command: |
+              curl --silent --location https://rpm.nodesource.com/setup_16.x | bash -
+              yum install nodejs -y
+        - run:
+            name: Get old stack workflow id & Delete old stacks
+            command: |
+              # Fetch the Old workflow ID
+              export OldWorkflowID=$(aws cloudformation \
+                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                      --no-paginate --output text)
+              echo OldWorkflowID: "${OldWorkflowID}"
+              echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
+              # Fetch the stack names          
+              export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+                      --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+              echo Stack names: "${STACKS[@]}"
+              # Clean up old stacks
+              if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
+              then
+                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+                aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+                aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+                aws cloudformation delete-stack --stack-name "udapeople-cloudfront-${OldWorkflowID}"
+              else
+                echo "nothing to clean up"
+              fi
   # notify_on_success:
   #   docker:
   #      - image: cimg/base:stable
@@ -580,5 +582,5 @@ workflows:
           requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
-      # - cleanup:
-      #     requires: [cloudfront-update]
+      - cleanup:
+          requires: [cloudfront-update]
