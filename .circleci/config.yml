@@ -492,7 +492,7 @@ jobs:
             sudo apt install -y nodejs
 
       - run:
-          name: Save Old Wokflow ID to kvdb.io
+          name: Save Old Workflow ID to kvdb.io
           command: |
               # Fetch the Old workflow ID
             export OLD_WORKFLOW_ID=$(aws cloudformation \
