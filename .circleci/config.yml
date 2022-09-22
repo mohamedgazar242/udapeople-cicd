@@ -491,23 +491,24 @@ jobs:
             curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
             sudo apt install -y nodejs
 
+      - add_ssh_keys:
+          fingerprints: ["59:56:66:ea:f0:17:f5:e6:73:8b:9d:74:52:c3:5b:57"]
+      - attach_workspace:
+          at: ~/
       - run:
-          name: Save Old Workflow ID to kvdb.io
+          name: Install dependencies
           command: |
-              # Fetch the Old workflow ID
-            export OLD_WORKFLOW_ID=$(aws cloudformation \
-                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
-                      --no-paginate --output text)
-            echo "Old Workflow ID: ${OLD_WORKFLOW_ID}"
-            curl https://kvdb.io/${KVDB_BUCKET}/old_workflow_id -d ${OLD_WORKFLOW_ID}   
-            
+            curl --silent --location https://rpm.nodesource.com/setup_16.x | bash -
+            yum install nodejs -y
       - run:
           name: Update cloudfront distribution
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/cloudfront.yml \
+              --stack-name udapeople-cloudfront-${CIRCLE_WORKFLOW_ID:0:7} \
               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
-              --stack-name InitialStack
+              --tags project=udapeople 
+          
                
       - destroy-environment
       - revert-migrations
