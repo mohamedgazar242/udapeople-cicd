@@ -426,7 +426,7 @@ jobs:
 
   smoke-test:
      docker:
-       - image: amazon/aws-cli
+       - image: cimg/base:stable
      steps:
        - checkout
        - run:
@@ -474,9 +474,9 @@ jobs:
              echo ${URL} 
              if curl -s ${URL} | grep "Welcome"
              then
-               exit 0
-             else
                exit 1
+             else
+               exit 2
              fi
       # - destroy-environment
       # - revert-migrations
