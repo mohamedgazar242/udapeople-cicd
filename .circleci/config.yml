@@ -514,8 +514,10 @@ jobs:
               name: Install tar utility
               command: |
               yum install -y tar gzip
+
           - attach_workspace:
-              at: ~/
+               at: ~/
+
           - run:
               name: Get old stack workflow
               command: |
