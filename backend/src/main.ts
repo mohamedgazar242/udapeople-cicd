@@ -10,6 +10,8 @@ import { TransformInterceptor } from './modules/common/interceptors/TransformInt
 import * as express from 'express';
 import { ErrorFilter } from './modules/errors/error.filter';
 
+console.log('hello from udapeople');
+
 async function bootstrap() {
   const logger = new AppLogger();
   logger.info(`NodeJs Version ${process.version}`);
@@ -45,7 +47,7 @@ async function bootstrap() {
       }
     },
   };
-  app.use(cors({  "origin": "*", "methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS"}));
+  app.use(cors({  "origin": ["*"], "methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS"}));
   app.useGlobalFilters(new ErrorFilter());
   await app.listen(config.PORT);
   logger.log(`Listening on port ${config.PORT}.`);
