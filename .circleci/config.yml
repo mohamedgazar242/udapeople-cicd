@@ -478,6 +478,7 @@ jobs:
         - image: amazon/aws-cli
       steps:
         - checkout
+        - run: yum install -y tar gzip
         - run:
           name: Install AWS CLI v2
           command: |
@@ -518,6 +519,8 @@ jobs:
         - image: amazon/aws-cli
       steps:
         - checkout
+        - run: yum install -y tar gzip
+
         - run:
           name: Install AWS CLI v2
           command: |
@@ -532,7 +535,7 @@ jobs:
              curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
              sudo apt install -y nodejs
      
-        - run: yum install -y tar gzip
+        
         - add_ssh_keys:
             fingerprints: ["6e:27:fa:9d:ad:16:8b:66:f7:c5:d0:00:6c:df:c8:48"]
         - attach_workspace:
