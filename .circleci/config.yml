@@ -475,10 +475,9 @@ jobs:
 
   cloudfront-update:
       docker:
-        - image: amazon/aws-cli
+        - image: cimg/base:stable
       steps:
         - checkout
-        - run: yum install -y tar gzip
         - run:
           name: Install AWS CLI v2
           command: |
@@ -494,16 +493,16 @@ jobs:
              sudo apt install -y nodejs
      
 
-        - run: yum install -y tar gzip
-        - add_ssh_keys:
-            fingerprints: ["6e:27:fa:9d:ad:16:8b:66:f7:c5:d0:00:6c:df:c8:48"]
-        - attach_workspace:
-            at: ~/
         - run:
-            name: Install dependencies
-            command: |
-              curl --silent --location https://rpm.nodesource.com/setup_16.x | bash -
-              yum install nodejs -y
+          name: Save Old Workflow ID to kvdb.io
+          command: |
+              # Fetch the Old workflow ID
+            export OLD_WORKFLOW_ID=$(aws cloudformation \
+                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                      --no-paginate --output text)
+            echo "Old Workflow ID: ${OLD_WORKFLOW_ID}"
+            curl https://kvdb.io/${KVDB_BUCKET}/old_workflow_id -d ${OLD_WORKFLOW_ID}  
+
         - run:
             name: Update cloudfront distribution
             command: |
@@ -513,14 +512,13 @@ jobs:
                 --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
                 --tags project=udapeople
         - destroy-environment
-        - revert-migrations        
+        - revert-migrations   
+
   cleanup:
       docker:
-        - image: amazon/aws-cli
+        - image: cimg/base:stable
       steps:
         - checkout
-        - run: yum install -y tar gzip
-
         - run:
           name: Install AWS CLI v2
           command: |
@@ -535,31 +533,20 @@ jobs:
              curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
              sudo apt install -y nodejs
      
-        
-        - add_ssh_keys:
-            fingerprints: ["6e:27:fa:9d:ad:16:8b:66:f7:c5:d0:00:6c:df:c8:48"]
-        - attach_workspace:
-            at: ~/
-        - run:
-            name: Install dependencies
-            command: |
-              curl --silent --location https://rpm.nodesource.com/setup_16.x | bash -
-              yum install nodejs -y
+  
         - run:
             name: Get old stack workflow id & Delete old stacks
-            command: |
-              # Fetch the Old workflow ID
-              export OldWorkflowID=$(aws cloudformation \
-                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
-                      --no-paginate --output text)
-              echo OldWorkflowID: "${OldWorkflowID}"
-              echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
-              # Fetch the stack names          
-              export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-                      --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            command: |         
+              export STACKS=($(aws cloudformation list-stacks \
+                --query "StackSummaries[*].StackName" \
+                --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
               echo Stack names: "${STACKS[@]}"
+
+              export OldWorkflowID=$(curl --insecure https://kvdb.io/${KVDB_BUCKET}/old_workflow_id )
+              echo Old Workflow ID: ${OLD_WORKFLOW_ID}
+
               # Clean up old stacks
-              if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
+              if [[ "${STACKS[@]]}" =~ "${OldWorkflowID}" ]]
               then
                 aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
                 aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
