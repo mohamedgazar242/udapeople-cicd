@@ -9,7 +9,6 @@ import * as cors from 'cors';
 import { TransformInterceptor } from './modules/common/interceptors/TransformInterceptor';
 import * as express from 'express';
 import { ErrorFilter } from './modules/errors/error.filter';
-
 console.log('hello from udapeople');
 
 async function bootstrap() {
@@ -47,7 +46,7 @@ async function bootstrap() {
       }
     },
   };
-  app.use(cors({  "origin": ["*"], "methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS"}));
+  app.use(cors(corsOptions));
   app.useGlobalFilters(new ErrorFilter());
   await app.listen(config.PORT);
   logger.log(`Listening on port ${config.PORT}.`);
